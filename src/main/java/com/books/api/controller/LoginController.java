@@ -16,7 +16,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class LoginController {
 
-    // Repositório de acesso aos dados de conta
+    // Repositório de acesso aos dados da conta
     private final AccountRepository accountRepository;
     private final ConfigService config;
 
@@ -27,6 +27,7 @@ public class LoginController {
         String email = body.get("email");
         String password = body.get("password");
 
+        //se email ou senha for nulo ou vazio -> error (400)
         if (email == null || password == null || email.isBlank() || password.isBlank()) {
             result.put("status", "error");
             result.put("code", "400");
@@ -34,6 +35,7 @@ public class LoginController {
             return result;
         }
 
+        //se email for vazio -> error(404)
         Optional<Account> opt = accountRepository.findByEmail(email.trim().toLowerCase());
         if (opt.isEmpty()) {
             result.put("status", "error");
@@ -42,8 +44,10 @@ public class LoginController {
             return result;
         }
 
+        //Estamos instanciando o account aqui para nao dar erro com o opt acima...
         Account account = opt.get();
 
+        //se a senha estiver incorreta -> error(401)
         if (!BCrypt.checkpw(password, account.getPassword())) {
             result.put("status", "error");
             result.put("code", "401");
@@ -51,6 +55,7 @@ public class LoginController {
             return result;
         }
 
+        //Pega o STATUS do account, caso esteja desativado -> error(403)
         if (!account.getStatus().name().equals("ON")) {
             result.put("status", "error");
             result.put("code", "403");
@@ -58,12 +63,14 @@ public class LoginController {
             return result;
         }
 
+        //Cria um map para guardar o id, name, email, role, do account.
         Map<String, Object> claims = new HashMap<>();
         claims.put("id", account.getId());
         claims.put("name", account.getName());
         claims.put("email", account.getEmail());
         claims.put("role", account.getRole().name());
 
+        //gera um token
         String token = JwtUtil.generateToken(account.getEmail(), claims);
 
         result.put("status", "success");

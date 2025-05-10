@@ -17,11 +17,10 @@ public class Application {
 		SpringApplication.run(Application.class, args);
 	}
 
-	@GetMapping("/hello")
+	@GetMapping("/")
 	public String hello() throws IOException {
 		return getPage("src/main/static/index.html");
 	}
-
 
 	public static String getPage(String path) throws IOException {
 		Path filePath = Paths.get(path);
